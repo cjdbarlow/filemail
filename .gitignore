@@ -1,0 +1,6 @@
+.DS_Store
+filemail.log
+filemail.config
+filemail.scpt
+filemail_stdout.log
+filemail_stderr.log
