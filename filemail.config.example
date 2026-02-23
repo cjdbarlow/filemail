@@ -1,0 +1,22 @@
+# filemail configuration
+# Copy this file to filemail.config and fill in your values.
+# filemail.config is .gitignored and will not be committed to the repo.
+
+# POSIX path to your DEVONthink database file (.dtBase2).
+# Leave empty to use the DEVONthink global inbox instead.
+DATABASE_PATH=/Users/YOURUSERNAME/Databases/MyDatabase.dtBase2
+
+# Mail account names to process, comma-separated.
+# Must match exactly as shown in Mail.app under your account list.
+# Example: INCLUDED_ACCOUNTS=Work,Personal
+INCLUDED_ACCOUNTS=My Account Name
+
+# Mailbox (folder) names to skip, comma-separated.
+# Matched against the folder's own name, not its full path.
+# No spaces around commas.
+EXCLUDED_MAILBOXES=INBOX,Inbox,Drafts,Trash,Junk,Spam,Deleted Messages,All Mail,[Gmail],Sent,Sent Messages
+
+# How many hours back to look for messages each run.
+# Set this to at least 1.5x your launchd StartInterval to avoid gaps at boundaries.
+# e.g. if launchd runs every hour (3600s), set HOURS=2.
+HOURS=8
