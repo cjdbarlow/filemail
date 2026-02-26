@@ -56,7 +56,9 @@ on run
 		end if
 	end tell
 
-	set theFolder to POSIX path of (path to temporary items)
+    -- Use the ~/Downloads folder as tmp location because Mail has limited scope with where it can save attachments
+	set theFolder to POSIX path of (path to downloads folder) & "filemail-tmp/"
+	do shell script "mkdir -p " & quoted form of theFolder
 	set cutoffDate to (current date) - (pHours * hours)
 	writeLog("Cutoff date: " & (cutoffDate as string))
 
@@ -78,6 +80,7 @@ on run
 		perform smart rule "Filter Duplicate Emails"
 	end tell
 
+	do shell script "rm -rf " & quoted form of theFolder
 	writeLog("=== filemail finished ===")
 end run
 
@@ -155,8 +158,10 @@ on fileMessage(theMessage, theFolder, dest_db)
 			-- Import attachments
 			repeat with theAttachment in mail attachments of theMessage
 				try
-					if downloaded of theAttachment then
-						set theFile to theFolder & (name of theAttachment)
+					set attachmentName to name of theAttachment
+					set isDownloaded to downloaded of theAttachment
+					if isDownloaded then
+						set theFile to theFolder & attachmentName
 						tell theAttachment to save in theFile
 						tell application id "DNtp"
 							set theAttachmentRecord to import path theFile to attachment_group
@@ -164,7 +169,12 @@ on fileMessage(theMessage, theFolder, dest_db)
 							set URL of theAttachmentRecord to theSender
 							perform smart rule trigger import event record theAttachmentRecord
 						end tell
+						my writeLog("  Attachment filed: '" & attachmentName & "'")
+					else
+						my writeLog("  Attachment skipped (not downloaded): '" & attachmentName & "'")
 					end if
+				on error errMsg
+					my writeLog("  Attachment ERROR: '" & attachmentName & "': " & errMsg)
 				end try
 			end repeat
 		on error errMsg
