@@ -17,6 +17,7 @@ property pNoSubjectString : "(no subject)"  -- DEVONthink default
 property pIncludedAccounts : {}
 property pExcludedMailboxes : {}
 property pHours : 0
+property pLogHours : 72
 
 
 -- ========= SCRIPTY BITS =========
@@ -32,6 +33,7 @@ on run
 	try
 		set pDatabasePath to do shell script "grep '^DATABASE_PATH=' " & quoted form of configFile & " | cut -d= -f2-"
 		set pHours to (do shell script "grep '^HOURS=' " & quoted form of configFile & " | cut -d= -f2-") as integer
+		set pLogHours to (do shell script "grep '^LOG_HOURS=' " & quoted form of configFile & " | cut -d= -f2-") as integer
 		set accountsStr to do shell script "grep '^INCLUDED_ACCOUNTS=' " & quoted form of configFile & " | cut -d= -f2-"
 		set excludedStr to do shell script "grep '^EXCLUDED_MAILBOXES=' " & quoted form of configFile & " | cut -d= -f2-"
 		set tid to AppleScript's text item delimiters
@@ -42,6 +44,13 @@ on run
 	on error errMsg
 		writeLog("ERROR: failed to load config from " & configFile & ": " & errMsg)
 		error "Config load failed"
+	end try
+
+	-- Trim log to pLogHours
+	set logFile to configDir & "/filemail.log"
+	try
+		set cutoffStr to do shell script "date -v -" & pLogHours & "H '+%Y-%m-%d %H:%M:%S'"
+		do shell script "[ -f " & quoted form of logFile & " ] && awk -v c=" & quoted form of cutoffStr & " 'substr($0,1,1)~/[0-9]/ && substr($0,1,19)>=c' " & quoted form of logFile & " > /tmp/filemail_log.tmp && mv /tmp/filemail_log.tmp " & quoted form of logFile
 	end try
 
 	writeLog("=== filemail started: pHours=" & pHours & ", accounts=" & (pIncludedAccounts as string) & " ===")
@@ -189,6 +198,7 @@ on writeLog(msg)
 	tell me
 		set scriptPath to POSIX path of (path to me)
 		set logDir to do shell script "dirname " & quoted form of scriptPath
-		do shell script "echo " & quoted form of ((current date) as string & "  " & msg) & " >> " & quoted form of (logDir & "/filemail.log")
+		set ts to do shell script "date '+%Y-%m-%d %H:%M:%S'"
+		do shell script "echo " & quoted form of (ts & "  " & msg) & " >> " & quoted form of (logDir & "/filemail.log")
 	end tell
 end writeLog
