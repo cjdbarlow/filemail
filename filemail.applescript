@@ -74,6 +74,10 @@ on run
 		end repeat
 	end tell
 
+	tell application id "DNtp"
+		perform smart rule "Filter Duplicate Emails"
+	end tell
+
 	writeLog("=== filemail finished ===")
 end run
 
