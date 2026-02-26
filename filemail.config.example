@@ -20,3 +20,6 @@ EXCLUDED_MAILBOXES=INBOX,Inbox,Drafts,Trash,Junk,Spam,Deleted Messages,All Mail,
 # Set this to at least 1.5x your launchd StartInterval to avoid gaps at boundaries.
 # e.g. if launchd runs every hour (3600s), set HOURS=2.
 HOURS=8
+
+# How many hours of log entries to retain. Older entries are trimmed at the start of each run.
+LOG_HOURS=72
