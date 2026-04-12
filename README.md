@@ -42,7 +42,7 @@ cp filemail.config.example filemail.config
 
 ### 2. Install the launch agent
 
-Copy `com.YOUR_USERNAME.filemail.plist` to `~/Library/LaunchAgents/`, then edit it to set your username and the absolute path to `filemail.scpt`:
+Copy `com.YOUR_USERNAME.filemail.plist` to `~/Library/LaunchAgents/`, then edit it to set your username and the absolute path variables to the script location:
 
 ```xml
 <key>ProgramArguments</key>
@@ -52,18 +52,14 @@ Copy `com.YOUR_USERNAME.filemail.plist` to `~/Library/LaunchAgents/`, then edit 
 </array>
 ```
 
-Update `StandardOutPath` and `StandardErrorPath` the same way, then load it:
-
 ```sh
 launchctl load ~/Library/LaunchAgents/com.YOUR_USERNAME.filemail.plist
 ```
 
-The agent runs every hour (`StartInterval: 3600`).
-
 ### 3. Test manually
 
 ```sh
-osascript filemail.scpt
+launchctl start com.YOUR_USERNAME.filemail
 ```
 
 Check `filemail.log` (written next to the script) for a run summary.

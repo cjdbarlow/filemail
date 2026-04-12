@@ -4,18 +4,17 @@
 <dict>
     <key>Label</key>
     <string>com.YOUR_USERNAME.filemail</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>FILEMAIL_DIR</key>
+        <string>/PATH/TO/SCRIPT/FOLDER/filemail</string>
+    </dict>
     <key>ProgramArguments</key>
     <array>
         <string>/usr/bin/osascript</string>
-        <string>/Users/YOUR_USERNAME/PATHTOSCRIPT/filemail.scpt</string>
+        <string>/PATH/TO/SCRIPT/FILE/filemail/filemail.scpt</string>
     </array>
     <key>StartInterval</key>
     <integer>3600</integer>
-    <key>RunAtLoad</key>
-    <false/>
-    <key>StandardOutPath</key>
-    <string>/Users/YOUR_USERNAME/PATHTOSCRIPT/filemail_stdout.log</string>
-    <key>StandardErrorPath</key>
-    <string>/Users/YOUR_USERNAME/PATHTOSCRIPT/filemail_stderr.log</string>
 </dict>
 </plist>

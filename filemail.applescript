@@ -25,11 +25,10 @@ property pLogHours : 72
 on run
 	-- Load configuration from filemail.config next to the script
 	tell me
-		set scriptPath to POSIX path of (path to me)
-		set configDir to do shell script "dirname " & quoted form of scriptPath
+        set configDir to do shell script "echo $FILEMAIL_DIR"
 		set configFile to configDir & "/filemail.config"
 	end tell
-
+	
 	try
 		set pDatabasePath to do shell script "grep '^DATABASE_PATH=' " & quoted form of configFile & " | cut -d= -f2-"
 		set pHours to (do shell script "grep '^HOURS=' " & quoted form of configFile & " | cut -d= -f2-") as integer
@@ -45,16 +44,16 @@ on run
 		writeLog("ERROR: failed to load config from " & configFile & ": " & errMsg)
 		error "Config load failed"
 	end try
-
+	
 	-- Trim log to pLogHours
 	set logFile to configDir & "/filemail.log"
 	try
 		set cutoffStr to do shell script "date -v -" & pLogHours & "H '+%Y-%m-%d %H:%M:%S'"
 		do shell script "[ -f " & quoted form of logFile & " ] && awk -v c=" & quoted form of cutoffStr & " 'substr($0,1,1)~/[0-9]/ && substr($0,1,19)>=c' " & quoted form of logFile & " > /tmp/filemail_log.tmp && mv /tmp/filemail_log.tmp " & quoted form of logFile
 	end try
-
+	
 	writeLog("=== filemail started: pHours=" & pHours & ", accounts=" & (pIncludedAccounts as string) & " ===")
-
+	
 	tell application id "DNtp"
 		if pDatabasePath is "" then
 			set dest_db to inbox
@@ -64,18 +63,18 @@ on run
 			my writeLog("Opened database: " & pDatabasePath)
 		end if
 	end tell
-
-    -- Use the ~/Downloads folder as tmp location because Mail has limited scope with where it can save attachments
+	
+	-- Use the ~/Downloads folder as tmp location because Mail has limited scope with where it can save attachments
 	set theFolder to POSIX path of (path to downloads folder) & "filemail-tmp/"
 	do shell script "mkdir -p " & quoted form of theFolder
 	set cutoffDate to (current date) - (pHours * hours)
 	writeLog("Cutoff date: " & (cutoffDate as string))
-
+	
 	tell application "Mail"
 		repeat with acctName in pIncludedAccounts
 			my writeLog("Processing account: " & acctName)
 			try
-				set theAcct to first account whose name is acctName
+				set theAcct to (first account whose name is acctName)
 				repeat with mbx in mailboxes of theAcct
 					my processMailbox(mbx, cutoffDate, theFolder, dest_db)
 				end repeat
@@ -84,11 +83,11 @@ on run
 			end try
 		end repeat
 	end tell
-
+	
 	tell application id "DNtp"
 		perform smart rule "Filter Duplicate Emails"
 	end tell
-
+	
 	do shell script "rm -rf " & quoted form of theFolder
 	writeLog("=== filemail finished ===")
 end run
@@ -102,15 +101,15 @@ on processMailbox(mbx, cutoffDate, theFolder, dest_db)
 			my writeLog("Skipping excluded mailbox: " & mbxName)
 			return
 		end if
-
+		
 		set recentMessages to (messages of mbx whose date received >= cutoffDate)
 		set msgCount to count of recentMessages
-		my writeLog("Mailbox: " & mbxName & " — " & msgCount & " recent message(s)")
-
+		my writeLog("Mailbox: " & mbxName & " - " & msgCount & " recent message(s)")
+		
 		repeat with msg in recentMessages
 			my fileMessage(msg, theFolder, dest_db)
 		end repeat
-
+		
 		repeat with child in mailboxes of mbx
 			my processMailbox(child, cutoffDate, theFolder, dest_db)
 		end repeat
@@ -126,7 +125,7 @@ on fileMessage(theMessage, theFolder, dest_db)
 		try
 			tell theMessage
 				set {theDateReceived, theDateSent, theSender, theSubject, theSource, theReadFlag} to {the date received, the date sent, the sender, subject, the source, the read status}
-
+				
 				-- Build folder path by walking up the mailbox hierarchy
 				set theMessageLocation to "/"
 				try
@@ -144,18 +143,18 @@ on fileMessage(theMessage, theFolder, dest_db)
 				set pathParts to text items of theMessageLocation
 				if (count of pathParts) > 3 then
 					set AppleScript's text item delimiters to "/"
-					set theMessageLocation to "/" & ((items 4 thru -1 of pathParts) as text)
+					set theMessageLocation to "/" & ((items 4 thru -1 of pathParts) as rich text)
 				else
 					set theMessageLocation to "/"
 				end if
 				set AppleScript's text item delimiters to tid
 			end tell
-
+			
 			set numAttachments to count of mail attachments of theMessage
 			if theSubject is equal to "" then set theSubject to pNoSubjectString
-
+			
 			my writeLog("Filing: '" & theSubject & "' -> " & theMessageLocation)
-
+			
 			-- Create DEVONthink record
 			tell application id "DNtp"
 				set message_group to create location theMessageLocation in dest_db
@@ -163,7 +162,7 @@ on fileMessage(theMessage, theFolder, dest_db)
 				perform smart rule trigger import event record theRecord
 				if numAttachments > 0 then set attachment_group to create location theMessageLocation & "/Attachments" in dest_db
 			end tell
-
+			
 			-- Import attachments
 			repeat with theAttachment in mail attachments of theMessage
 				try
@@ -196,8 +195,7 @@ end fileMessage
 -- Append a timestamped line to filemail.log next to the script
 on writeLog(msg)
 	tell me
-		set scriptPath to POSIX path of (path to me)
-		set logDir to do shell script "dirname " & quoted form of scriptPath
+        set logDir to do shell script "echo $FILEMAIL_DIR"
 		set ts to do shell script "date '+%Y-%m-%d %H:%M:%S'"
 		do shell script "echo " & quoted form of (ts & "  " & msg) & " >> " & quoted form of (logDir & "/filemail.log")
 	end tell
